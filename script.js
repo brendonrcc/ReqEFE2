@@ -831,41 +831,47 @@ async function verifyAndAddNickname(inputId, chipsContainerId, hiddenInputId, co
         const todayStr = new Date().toLocaleDateString('pt-BR');
 
         if (formId === 'form-advertencia') {
-    const chipsContainer = formElement.querySelector('.nickname-chips-container');
-    const chips = Array.from(chipsContainer.children);
-    const permissao = formData.get('permissao');
+        const chipsContainer = formElement.querySelector('.nickname-chips-container');
+        const chips = Array.from(chipsContainer.children);
+        const permissao = formData.get('permissao');
 
-    const groups = {};
-    chips.forEach(chip => {
-        const gId = chip.dataset.group;
-        if(!groups[gId]) groups[gId] = [];
-        groups[gId].push(chip.dataset.nick);
-    });
-
-    Object.keys(groups).sort().forEach(gId => {
-        const nicks = groups[gId].join(' / ');
-        const tipo = formElement.querySelector(`[name="tipo_g${gId}"]`)?.value || "Advertência";
-        const motivo = formElement.querySelector(`[name="motivo_g${gId}"]`)?.value || "Não informado";
-        
-        // Cálculo de 30 dias para a validade
-        const dataTermino = new Date();
-        dataTermino.setDate(dataTermino.getDate() + 30);
-        const validadeStr = dataTermino.toLocaleDateString('pt-BR');
-
-        let groupContent = `[font=Poppins][b]Nickname(s):[/b] ${nicks}\n`;
-        groupContent += `[b]Tipo:[/b] ${tipo}\n`;
-        groupContent += `[b]Motivo(s):[/b] ${motivo}\n`;
-        groupContent += `[b]Data:[/b] ${todayStr}\n`;
-        groupContent += `[b]Vencimento:[/b] ${validadeStr}\n`;
-        groupContent += `[b]Permissão:[/b] ${permissao}[/font]`;
-
-        queue.push({
-            id: `${tipo} - Grupo ${gId}`,
-            bbcode: generateSingleBBCode(tipo, groupContent)
+        const groups = {};
+        chips.forEach(chip => {
+            const gId = chip.dataset.group;
+            if(!groups[gId]) groups[gId] = [];
+            groups[gId].push(chip.dataset.nick);
         });
-    });
-    return queue;
-}
+
+        const formatHabboDate = (dateObj) => {
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const months = ["Jan.", "Fev.", "Mar.", "Abr.", "Mai.", "Jun.", "Jul.", "Ago.", "Set.", "Out.", "Nov.", "Dez."];
+            return `${day} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+        };
+
+        const dataInicioObj = new Date();
+        const dataVencimentoObj = new Date();
+        dataVencimentoObj.setDate(dataInicioObj.getDate() + 30);
+
+        const periodoStr = `${formatHabboDate(dataInicioObj)} a ${formatHabboDate(dataVencimentoObj)}`;
+
+        Object.keys(groups).sort().forEach(gId => {
+            const nicks = groups[gId].join(' / ');
+            const tipo = formElement.querySelector(`[name="tipo_g${gId}"]`)?.value || "Advertência";
+            const motivo = formElement.querySelector(`[name="motivo_g${gId}"]`)?.value || "Não informado";
+            
+            let groupContent = `[font=Poppins][b]Nickname(s):[/b] ${nicks}\n`;
+            groupContent += `[b]Tipo:[/b] ${tipo}\n`;
+            groupContent += `[b]Motivo(s):[/b] ${motivo}\n`;
+            groupContent += `[b]Período:[/b] ${periodoStr}\n`;
+            groupContent += `[b]Permissão:[/b] ${permissao}[/font]`;
+
+            queue.push({
+                id: `${tipo} - Grupo ${gId}`,
+                bbcode: generateSingleBBCode(tipo, groupContent)
+            });
+        });
+        return queue;
+    }
 
         if (formId === 'form-atualizacao') {
              const tag = formData.get('nickname') || "Atualização";
