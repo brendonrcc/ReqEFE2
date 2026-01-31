@@ -855,9 +855,9 @@ async function verifyAndAddNickname(inputId, chipsContainerId, hiddenInputId, co
         let groupContent = `[font=Poppins][b]Nickname(s):[/b] ${nicks}\n`;
         groupContent += `[b]Tipo:[/b] ${tipo}\n`;
         groupContent += `[b]Motivo(s):[/b] ${motivo}\n`;
+        groupContent += `[b]Data:[/b] ${todayStr}\n`;
         groupContent += `[b]Vencimento:[/b] ${validadeStr}\n`;
-        groupContent += `[b]Permissão:[/b] ${permissao}\n`;
-        groupContent += `[b]Data:[/b] ${todayStr}[/font]`;
+        groupContent += `[b]Permissão:[/b] ${permissao}[/font]`;
 
         queue.push({
             id: `${tipo} - Grupo ${gId}`,
