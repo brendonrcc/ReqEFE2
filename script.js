@@ -1,5 +1,6 @@
         const CONFIG = { 
-        mainTopicId: 38026, 
+        mainTopicId: 38026,
+        topicAdvertencia: 38367,
         topicDA: 38468, 
         topicDRI: 38580,
         topicDM: 36210,  
@@ -829,7 +830,42 @@ async function verifyAndAddNickname(inputId, chipsContainerId, hiddenInputId, co
         const queue = [];
         const todayStr = new Date().toLocaleDateString('pt-BR');
 
-        if (formId === 'form-advertencia') return [];
+        if (formId === 'form-advertencia') {
+    const chipsContainer = formElement.querySelector('.nickname-chips-container');
+    const chips = Array.from(chipsContainer.children);
+    const permissao = formData.get('permissao');
+
+    const groups = {};
+    chips.forEach(chip => {
+        const gId = chip.dataset.group;
+        if(!groups[gId]) groups[gId] = [];
+        groups[gId].push(chip.dataset.nick);
+    });
+
+    Object.keys(groups).sort().forEach(gId => {
+        const nicks = groups[gId].join(' / ');
+        const tipo = formElement.querySelector(`[name="tipo_g${gId}"]`)?.value || "Advertência";
+        const motivo = formElement.querySelector(`[name="motivo_g${gId}"]`)?.value || "Não informado";
+        
+        // Cálculo de 30 dias para a validade
+        const dataTermino = new Date();
+        dataTermino.setDate(dataTermino.getDate() + 30);
+        const validadeStr = dataTermino.toLocaleDateString('pt-BR');
+
+        let groupContent = `[font=Poppins][b]Nickname(s):[/b] ${nicks}\n`;
+        groupContent += `[b]Tipo:[/b] ${tipo}\n`;
+        groupContent += `[b]Motivo(s):[/b] ${motivo}\n`;
+        groupContent += `[b]Vencimento:[/b] ${validadeStr}\n`;
+        groupContent += `[b]Permissão:[/b] ${permissao}\n`;
+        groupContent += `[b]Data:[/b] ${todayStr}[/font]`;
+
+        queue.push({
+            id: `${tipo} - Grupo ${gId}`,
+            bbcode: generateSingleBBCode(tipo, groupContent)
+        });
+    });
+    return queue;
+}
 
         if (formId === 'form-atualizacao') {
              const tag = formData.get('nickname') || "Atualização";
@@ -979,7 +1015,7 @@ async function verifyAndAddNickname(inputId, chipsContainerId, hiddenInputId, co
                         finalContent += `[b]Retorno em:[/b] ${dataRetornoStr}\n`;
                         finalContent += `[b]Permissão:[/b] ${permissao}[/font]\n`;
                     } else if (formId === 'form-retorno_licenca') {
-                        finalContent += `[font=Poppins][b]Data:/b] ${todayStr}[/font]\n`;
+                        finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
                     } else {
                         finalContent += commonPart;
                         finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
@@ -1426,6 +1462,7 @@ async function verifyAndAddNickname(inputId, chipsContainerId, hiddenInputId, co
 
                 // --- FASE 3: POSTAGEM NO FÓRUM ---
                 if (form.id !== 'form-advertencia') {
+                    // LÓGICA PARA TODOS OS OUTROS FORMS (TÓPICO PRINCIPAL)
                     btnText.textContent = "GERANDO BBCODE...";
                     const queue = generatePostQueue(form.id, formData, form);
                     
@@ -1443,7 +1480,6 @@ async function verifyAndAddNickname(inputId, chipsContainerId, hiddenInputId, co
 
                     for (let i = 0; i < queue.length; i++) {
                         const item = queue[i];
-                        
                         btnText.textContent = `POSTANDO ${item.id.toUpperCase()}...`;
                         showNotificationProgress("Enviando...", `Postando <strong>${item.id}</strong>...`);
                         
@@ -1455,61 +1491,24 @@ async function verifyAndAddNickname(inputId, chipsContainerId, hiddenInputId, co
                                 await postToForumTopic(CONFIG.mainTopicId, item.bbcode);
                                 posted = true;
                             } catch (err) {
-                                if(err.message.toLowerCase().includes('flood') || err.message.toLowerCase().includes('aguarde')) {
+                                if(err.message.toLowerCase().includes('flood')) {
                                     attempts++;
                                     for(let w = 17; w > 0; w--) {
                                         btnText.textContent = `FLOOD (T${attempts})... ${w}s`;
                                         await delay(1000);
                                     }
-                                } else {
-                                    console.error("Erro fatal ao postar:", err);
-                                    showToast("Erro Postagem", `Falha ao postar ${item.id}.`, "danger");
-                                    break; 
-                                }
+                                } else { break; }
                             }
                         }
 
-
+                        // Lógica de subgrupos (DA, DRI, DM) se houver
                         if (posted && subgruposParaPostar.length > 0) {
                             for (const sub of subgruposParaPostar) {
                                 for (let sec = 17; sec > 0; sec--) {
                                     btnText.textContent = `AGUARDE... ${sec}s`;
-                                    if(sec % 5 === 0) showNotificationProgress("Anti-Flood", `Aguardando para postar em <strong>${sub.name}</strong>...`);
                                     await delay(1000);
                                 }
-
-                        
-                                const specificPerm = formData.get(`permissao_${sub.name}`);
-                                let specificBBCode = item.bbcode;
-                                if(specificPerm) {
-                                     if(specificBBCode.includes('[b]Permissão:[/b]')) {
-                                         specificBBCode = specificBBCode.replace(/\[b\]Permissão:\[\/b\] .+/g, `[b]Permissão:[/b] ${specificPerm}`);
-                                         specificBBCode = specificBBCode.replace(/\[b\]Permissão:\[\/b\].*?\n/g, `[b]Permissão:[/b] ${specificPerm}\n`);
-                                     } else {
-                                         specificBBCode += `\n[b]Permissão:[/b] ${specificPerm}`;
-                                     }
-                                }
-
-                                btnText.textContent = `POSTANDO EM ${sub.name}...`;
-                                
-                                let subPosted = false;
-                                let subAttempts = 0;
-                                while(!subPosted && subAttempts < 3) {
-                                    try {
-                                        await postToForumTopic(sub.id, specificBBCode);
-                                        subPosted = true;
-                                    } catch(err) {
-                                        if(err.message.toLowerCase().includes('flood')) {
-                                            subAttempts++;
-                                            for(let w = 17; w > 0; w--) {
-                                                btnText.textContent = `FLOOD SUB... ${w}s`;
-                                                await delay(1000);
-                                            }
-                                        } else {
-                                            break; 
-                                        }
-                                    }
-                                }
+                                await postToForumTopic(sub.id, item.bbcode);
                             }
                         }
 
@@ -1521,8 +1520,31 @@ async function verifyAndAddNickname(inputId, chipsContainerId, hiddenInputId, co
                         }
                     }
                     showNotificationSuccess("Concluído!", "Todos os requerimentos foram processados.", true);
+
                 } else {
-                    showNotificationSuccess("Concluído!", "Punição registrada com sucesso.", false);
+                    // LÓGICA EXCLUSIVA PARA FORM-ADVERTENCIA (TÓPICO 38367)
+                    btnText.textContent = "GERANDO BBCODE...";
+                    const queue = generatePostQueue(form.id, formData, form);
+
+                    for (let i = 0; i < queue.length; i++) {
+                        const item = queue[i];
+                        btnText.textContent = `POSTANDO ${item.id.toUpperCase()}...`;
+                        
+                        try {
+                            // Envia para o tópico fixo de advertências
+                            await postToForumTopic(38367, item.bbcode);
+                            
+                            if (i < queue.length - 1) {
+                                for (let sec = 17; sec > 0; sec--) {
+                                    btnText.textContent = `FLOOD... ${sec}s`;
+                                    await delay(1000);
+                                }
+                            }
+                        } catch (err) {
+                            showToast("Erro Postagem", `Falha ao postar advertência: ${err.message}`, "danger");
+                        }
+                    }
+                    showNotificationSuccess("Concluído!", "Advertência postada com sucesso.", true);
                 }
                 
                 const btnConfira = document.getElementById('confira-post-btn');
