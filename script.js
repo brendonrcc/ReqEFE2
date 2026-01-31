@@ -825,223 +825,224 @@ async function verifyAndAddNickname(inputId, chipsContainerId, hiddenInputId, co
         return `[table style="width: 30%; border: none!important; overflow: hidden; border-radius: 7px; left: 24%; position: relative; z-index: 9; margin-bottom: -55px"][tr style="border: none !important;"][td style="border: none!important; padding: 12px"][img(42px,42px)]https://2img.net/i.imgur.com/U9aXSQB.png[/img][/td][/tr][/table]\n\n[center][table style="width: 20%; border: none!important; overflow: hidden; border-radius: 7px; position: relative; margin-top: -1.8%; font-family: 'Poppins', sans-serif; color: #ffffff; z-index: 1" bgcolor="79a8c3"][tr style="border: none !important;"][td style="border: none!important; padding: 12px"][b]${title}[/b][/td][/tr][/table][/center]\n\n${content}`;
     }
 
-    function generatePostQueue(formId, formData, formElement) {
-        let title = selectedTextElem.textContent; 
-        const queue = [];
-        const todayStr = new Date().toLocaleDateString('pt-BR');
+function generatePostQueue(formId, formData, formElement) {
+        let title = selectedTextElem.textContent; 
+        const queue = [];
+        const todayStr = new Date().toLocaleDateString('pt-BR');
 
-        if (formId === 'form-advertencia') {
-        const chipsContainer = formElement.querySelector('.nickname-chips-container');
-        const chips = Array.from(chipsContainer.children);
-        const permissao = formData.get('permissao');
+        if (formId === 'form-advertencia') {
+            const chipsContainer = formElement.querySelector('.nickname-chips-container');
+            const chips = Array.from(chipsContainer.children);
+            const permissao = formData.get('permissao');
 
-        const groups = {};
-        chips.forEach(chip => {
-            const gId = chip.dataset.group;
-            if(!groups[gId]) groups[gId] = [];
-            groups[gId].push(chip.dataset.nick);
-        });
-
-        const formatHabboDate = (dateObj) => {
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            const months = ["Jan.", "Fev.", "Mar.", "Abr.", "Mai.", "Jun.", "Jul.", "Ago.", "Set.", "Out.", "Nov.", "Dez."];
-            return `${day} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
-        };
-
-        const dataInicioObj = new Date();
-        const dataVencimentoObj = new Date();
-        dataVencimentoObj.setDate(dataInicioObj.getDate() + 30);
-
-        const periodoStr = `${formatHabboDate(dataInicioObj)} a ${formatHabboDate(dataVencimentoObj)}`;
-
-        Object.keys(groups).sort().forEach(gId => {
-            const nicks = groups[gId].join(' / ');
-            const tipo = formElement.querySelector(`[name="tipo_g${gId}"]`)?.value || "Advertência";
-            const motivo = formElement.querySelector(`[name="motivo_g${gId}"]`)?.value || "Não informado";
-            
-            let groupContent = `[font=Poppins][b]Nickname(s):[/b] ${nicks}\n`;
-            groupContent += `[b]Tipo:[/b] ${tipo}\n`;
-            groupContent += `[b]Motivo(s):[/b] ${motivo}\n`;
-            groupContent += `[b]Período:[/b] ${periodoStr}\n`;
-            groupContent += `[b]Permissão:[/b] ${permissao}[/font]`;
-
-            queue.push({
-                id: `${tipo} - Grupo ${gId}`,
-                bbcode: generateSingleBBCode(tipo, groupContent)
+            const groups = {};
+            chips.forEach(chip => {
+                const gId = chip.dataset.group;
+                if(!groups[gId]) groups[gId] = [];
+                groups[gId].push(chip.dataset.nick);
             });
-        });
+
+            const formatHabboDate = (dateObj) => {
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const months = ["Jan.", "Fev.", "Mar.", "Abr.", "Mai.", "Jun.", "Jul.", "Ago.", "Set.", "Out.", "Nov.", "Dez."];
+                return `${day} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+            };
+
+            const dataInicioObj = new Date();
+            const dataVencimentoObj = new Date();
+            dataVencimentoObj.setDate(dataInicioObj.getDate() + 30);
+
+            const periodoStr = `${formatHabboDate(dataInicioObj)} a ${formatHabboDate(dataVencimentoObj)}`;
+
+            Object.keys(groups).sort().forEach(gId => {
+                const nicks = groups[gId].join(' / ');
+                const tipo = formElement.querySelector(`[name="tipo_g${gId}"]`)?.value || "Advertência";
+                const motivo = formElement.querySelector(`[name="motivo_g${gId}"]`)?.value || "Não informado";
+                
+                // Montagem do BBCode SEM o campo de provas
+                let groupContent = `[font=Poppins][b]Nickname(s):[/b] ${nicks}\n`;
+                groupContent += `[b]Tipo:[/b] ${tipo}\n`;
+                groupContent += `[b]Motivo(s):[/b] ${motivo}\n`;
+                groupContent += `[b]Período:[/b] ${periodoStr}\n`;
+                groupContent += `[b]Permissão:[/b] ${permissao}[/font]`;
+
+                queue.push({
+                    id: `${tipo} - Grupo ${gId}`,
+                    bbcode: generateSingleBBCode(tipo, groupContent)
+                });
+            });
+            return queue;
+        }
+
+        if (formId === 'form-atualizacao') {
+             const tag = formData.get('nickname') || "Atualização";
+             const bbcode = `[center][img(70px,70px)]https://i.imgur.com/U9aXSQB.png[/img][/center]\n\n` +
+                    `[table style="width: 30%; border: none!important; overflow: hidden; border-radius: 7px; position: relative; margin: auto; bottom: 3.2em; font-family: 'Poppins', sans-serif; color: #ffffff; box-shadow: 0 4px 12px rgba(93, 142, 163, 0.4); z-index: 2" bgcolor="79a8c3"]` +
+                    `[tr style="border: none !important;"]` +
+                    `[td style="border: none!important; padding: 8px"]` +                
+                    `[b][EFE] Atualização realizada! [${tag}][/b][/td][/tr][/table]\n\n` +
+                    `[table style="width: 23%; border: none!important; overflow: hidden; border-radius: 0 0 5px 5px; position: relative; margin: auto; bottom: 4.6em; font-family: 'Poppins', sans-serif; color: #ffffff; box-shadow: 0 4px 12px rgba(93, 142, 163, 0.4); z-index: 2" bgcolor="5A7D91"]` +
+                    `[tr style="border: none !important;"]` +
+                    `[td style="border: none!important; padding: 5px"]` +
+                    `[url=https://www.policiarcc.com/t31424-efe-lista-de-membros][size=9][color=white]ACESSAR A LISTAGEM DE MEMBROS[/color][/size][/url]` +
+                    `[/td][/tr][/table]`;
+             queue.push({ id: 'atualizacao', bbcode });
+             return queue;
+        }
+
+        if (['form-saida', 'form-expulsao', 'form-promocao'].includes(formId)) {
+            const chipsContainer = formElement.querySelector('.nickname-chips-container');
+            const chips = Array.from(chipsContainer.children);
+            const permissao = formData.get('permissao');
+            const termo = formData.get('termo') ? 'Concordo com todos os termos relacionados à saída da companhia.' : 'Não aceito (ERRO)';
+
+            const groups = {};
+            chips.forEach(chip => {
+                const gId = chip.dataset.group;
+                if(!groups[gId]) groups[gId] = [];
+                groups[gId].push(chip.dataset.nick);
+            });
+
+            Object.keys(groups).sort().forEach(gId => {
+                const nicks = groups[gId];
+                const joinedNicks = nicks.join(' / '); 
+                
+                let groupContent = "";
+                let dynamicTitle = title; 
+
+                if (formId === 'form-promocao') {
+                    const cargoAtual = formElement.querySelector(`[name="cargo_atual_g${gId}"]`)?.value || "Não informado";
+                    const novoCargo = formElement.querySelector(`[name="novo_cargo_g${gId}"]`)?.value || "Não informado";
+                    const dataRaw = formElement.querySelector(`[name="data_g${gId}"]`)?.value;
+                    const data = dataRaw ? new Date(dataRaw).toLocaleDateString('pt-BR') : "Não informado";
+                    const motivo = formElement.querySelector(`[name="motivo_g${gId}"]`)?.value || "Não informado";
+                    
+                    const hierarchy = {
+                        "Professor(a)": 1, "Mentor(a)": 2, "Capacitador(a)": 3, "Graduador(a)": 4,
+                        "Estagiário(a)": 5, "Ministro": 6, "Vice-Líder": 7, "Líder": 8
+                    };
+                    
+                    const oldRank = hierarchy[cargoAtual] || 0;
+                    const newRank = hierarchy[novoCargo] || 0;
+                    
+                    if (newRank > oldRank) dynamicTitle = "Promoção";
+                    else if (newRank < oldRank) dynamicTitle = "Rebaixamento";
+                    else dynamicTitle = "Alteração de Cargo";
+
+                    groupContent += `[font=Poppins][b]Nickname(s):[/b] ${joinedNicks}\n`;
+                    groupContent += `[b]Cargo atual:[/b] ${cargoAtual}\n`;
+                    groupContent += `[b]Novo cargo:[/b] ${novoCargo}\n`;
+                    groupContent += `[b]Motivo(s):[/b] ${motivo}\n`;
+                    groupContent += `[b]Data:[/b] ${data}[/font]\n`;
+
+                } else if (formId === 'form-saida' || formId === 'form-expulsao') {
+                    const cargo = formElement.querySelector(`[name="cargo_g${gId}"]`)?.value || "Não informado";
+                    const motivo = formElement.querySelector(`[name="motivo_g${gId}"]`)?.value || "Não informado";
+                    
+                    groupContent += `[font=Poppins][b]Nickname(s):[/b] ${joinedNicks}\n`;
+                    groupContent += `[b]Cargo:[/b] ${cargo}\n`;
+                    groupContent += `[b]Motivo(s):[/b] ${motivo}\n`;
+                    groupContent += `[b]Permissão:[/b] ${permissao}\n`;
+                    groupContent += `[b]Data:[/b] ${todayStr}[/font]\n`;
+
+                    if(formId === 'form-saida') {
+                        groupContent += `\n[font=Poppins]✓ ${termo} [/font]\n`;
+                    }
+                }
+
+                queue.push({
+                    id: `${dynamicTitle} - Grupo ${gId}`,
+                    bbcode: generateSingleBBCode(dynamicTitle, groupContent)
+                });
+            });
+
+        } else {
+            const nick = formData.get('nickname');
+            
+            if (formId === 'form-entrada' || formId === 'form-reintegracao') {
+                let finalContent = `[font=Poppins][b]Nickname(s):[/b] ${nick}[/font]\n`;
+                if(formId === 'form-reintegracao') {
+                     finalContent += `[font=Poppins][b]Graduação:[/b] ${formData.get('graduacao')}[/font]\n`;
+                     title = "Reintegração";
+                }
+                finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
+
+                queue.push({
+                    id: formId === 'form-entrada' ? 'Entrada Coletiva' : 'Reintegração',
+                    bbcode: generateSingleBBCode(title, finalContent)
+                });
+            } else {
+                let content = "";
+                let dynamicTitle = title;
+                
+                if (formId === 'form-licenca') {
+                    const dias = parseInt(formData.get('dias'));
+                    dynamicTitle = dias <= 30 ? "Licença" : "Reserva";
+                }
+                
+                let commonPart = getCommonFieldsBBCode(formId, formData);
+
+                if(nick && nick.includes('/')) {
+                    const nickList = nick.split('/').map(n => n.trim());
+                    nickList.forEach(n => {
+                        let finalContent = `[font=Poppins][b]Nickname:[/b] ${n}[/font]\n`;
+
+                        if (formId === 'form-licenca') {
+                            const dias = formData.get('dias');
+                            const permissao = formData.get('permissao');
+                            const dataRetorno = new Date();
+                            dataRetorno.setDate(dataRetorno.getDate() + parseInt(dias));
+                            const dataRetornoStr = dataRetorno.toLocaleDateString('pt-BR');
+
+                            finalContent += `[font=Poppins][b]Duração:[/b] ${dias} dias\n`;
+                            finalContent += `[b]Solicitada em:[/b] ${todayStr}\n`;
+                            finalContent += `[b]Retorno em:[/b] ${dataRetornoStr}\n`;
+                            finalContent += `[b]Permissão:[/b] ${permissao}[/font]\n`;
+                        } else if (formId === 'form-retorno_licenca') {
+                            finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
+                        } else {
+                            finalContent += commonPart;
+                            finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
+                        }
+                        
+                        queue.push({ id: n, bbcode: generateSingleBBCode(dynamicTitle, finalContent) });
+                    });
+                } else if (nick) {
+                    let finalContent = `[font=Poppins][b]Nickname:[/b] ${nick}[/font]\n`;
+                    
+                    if (formId === 'form-licenca') {
+                        const dias = formData.get('dias');
+                        const permissao = formData.get('permissao');
+                        const dataRetorno = new Date();
+                        dataRetorno.setDate(dataRetorno.getDate() + parseInt(dias));
+                        const dataRetornoStr = dataRetorno.toLocaleDateString('pt-BR');
+
+                        finalContent += `[font=Poppins][b]Duração:[/b] ${dias} dias\n`;
+                        finalContent += `[b]Solicitada em:[/b] ${todayStr}\n`;
+                        finalContent += `[b]Retorno em:[/b] ${dataRetornoStr}\n`;
+                        finalContent += `[b]Permissão:[/b] ${permissao}[/font]\n`;
+                    } else if (formId === 'form-retorno_licenca') {
+                        finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
+                    } else {
+                        finalContent += commonPart;
+                        finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
+                    }
+
+                    queue.push({
+                        id: 'Único',
+                        bbcode: generateSingleBBCode(dynamicTitle, finalContent)
+                    });
+                } else {
+                     queue.push({
+                        id: 'Único',
+                        bbcode: generateSingleBBCode(dynamicTitle, commonPart + `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`)
+                    });
+                }
+            }
+        }
+
         return queue;
     }
-
-        if (formId === 'form-atualizacao') {
-             const tag = formData.get('nickname') || "Atualização";
-             const bbcode = `[center][img(70px,70px)]https://i.imgur.com/U9aXSQB.png[/img][/center]\n\n` +
-                    `[table style="width: 30%; border: none!important; overflow: hidden; border-radius: 7px; position: relative; margin: auto; bottom: 3.2em; font-family: 'Poppins', sans-serif; color: #ffffff; box-shadow: 0 4px 12px rgba(93, 142, 163, 0.4); z-index: 2" bgcolor="79a8c3"]` +
-                    `[tr style="border: none !important;"]` +
-                    `[td style="border: none!important; padding: 8px"]` +               
-                    `[b][EFE] Atualização realizada! [${tag}][/b][/td][/tr][/table]\n\n` +
-                    `[table style="width: 23%; border: none!important; overflow: hidden; border-radius: 0 0 5px 5px; position: relative; margin: auto; bottom: 4.6em; font-family: 'Poppins', sans-serif; color: #ffffff; box-shadow: 0 4px 12px rgba(93, 142, 163, 0.4); z-index: 2" bgcolor="5A7D91"]` +
-                    `[tr style="border: none !important;"]` +
-                    `[td style="border: none!important; padding: 5px"]` +
-                    `[url=https://www.policiarcc.com/t31424-efe-lista-de-membros][size=9][color=white]ACESSAR A LISTAGEM DE MEMBROS[/color][/size][/url]` +
-                    `[/td][/tr][/table]`;
-             queue.push({ id: 'atualizacao', bbcode });
-             return queue;
-        }
-
-        if (['form-saida', 'form-expulsao', 'form-promocao'].includes(formId)) {
-            const chipsContainer = formElement.querySelector('.nickname-chips-container');
-            const chips = Array.from(chipsContainer.children);
-            const permissao = formData.get('permissao');
-            const termo = formData.get('termo') ? 'Concordo com todos os termos relacionados à saída da companhia.' : 'Não aceito (ERRO)';
-
-            const groups = {};
-            chips.forEach(chip => {
-                const gId = chip.dataset.group;
-                if(!groups[gId]) groups[gId] = [];
-                groups[gId].push(chip.dataset.nick);
-            });
-
-            Object.keys(groups).sort().forEach(gId => {
-                const nicks = groups[gId];
-                const joinedNicks = nicks.join(' / '); 
-                
-                let groupContent = "";
-                let dynamicTitle = title; 
-
-                if (formId === 'form-promocao') {
-                    const cargoAtual = formElement.querySelector(`[name="cargo_atual_g${gId}"]`)?.value || "Não informado";
-                    const novoCargo = formElement.querySelector(`[name="novo_cargo_g${gId}"]`)?.value || "Não informado";
-                    const dataRaw = formElement.querySelector(`[name="data_g${gId}"]`)?.value;
-                    const data = dataRaw ? new Date(dataRaw).toLocaleDateString('pt-BR') : "Não informado";
-                    const motivo = formElement.querySelector(`[name="motivo_g${gId}"]`)?.value || "Não informado";
-                    
-                    const hierarchy = {
-                        "Professor(a)": 1, "Mentor(a)": 2, "Capacitador(a)": 3, "Graduador(a)": 4,
-                        "Estagiário(a)": 5, "Ministro": 6, "Vice-Líder": 7, "Líder": 8
-                    };
-                    
-                    const oldRank = hierarchy[cargoAtual] || 0;
-                    const newRank = hierarchy[novoCargo] || 0;
-                    
-                    if (newRank > oldRank) dynamicTitle = "Promoção";
-                    else if (newRank < oldRank) dynamicTitle = "Rebaixamento";
-                    else dynamicTitle = "Alteração de Cargo";
-
-                    groupContent += `[font=Poppins][b]Nickname(s):[/b] ${joinedNicks}\n`;
-                    groupContent += `[b]Cargo atual:[/b] ${cargoAtual}\n`;
-                    groupContent += `[b]Novo cargo:[/b] ${novoCargo}\n`;
-                    groupContent += `[b]Motivo(s):[/b] ${motivo}\n`;
-                    groupContent += `[b]Data:[/b] ${data}[/font]\n`;
-
-                } else if (formId === 'form-saida' || formId === 'form-expulsao') {
-                    const cargo = formElement.querySelector(`[name="cargo_g${gId}"]`)?.value || "Não informado";
-                    const motivo = formElement.querySelector(`[name="motivo_g${gId}"]`)?.value || "Não informado";
-                    
-                    groupContent += `[font=Poppins][b]Nickname(s):[/b] ${joinedNicks}\n`;
-                    groupContent += `[b]Cargo:[/b] ${cargo}\n`;
-                    groupContent += `[b]Motivo(s):[/b] ${motivo}\n`;
-                    groupContent += `[b]Permissão:[/b] ${permissao}\n`;
-                    groupContent += `[b]Data:[/b] ${todayStr}[/font]\n`;
-
-                    if(formId === 'form-saida') {
-                        groupContent += `\n[font=Poppins]✓ ${termo} [/font]\n`;
-                    }
-                }
-
-                queue.push({
-                    id: `${dynamicTitle} - Grupo ${gId}`,
-                    bbcode: generateSingleBBCode(dynamicTitle, groupContent)
-                });
-            });
-
-        } else {
-            const nick = formData.get('nickname');
-            
-            if (formId === 'form-entrada' || formId === 'form-reintegracao') {
-                let finalContent = `[font=Poppins][b]Nickname(s):[/b] ${nick}[/font]\n`;
-                if(formId === 'form-reintegracao') {
-                     finalContent += `[font=Poppins][b]Graduação:[/b] ${formData.get('graduacao')}[/font]\n`;
-                     title = "Reintegração";
-                }
-                finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
-
-                queue.push({
-                    id: formId === 'form-entrada' ? 'Entrada Coletiva' : 'Reintegração',
-                    bbcode: generateSingleBBCode(title, finalContent)
-                });
-            } else {
-                let content = "";
-                let dynamicTitle = title;
-                
-                if (formId === 'form-licenca') {
-                    const dias = parseInt(formData.get('dias'));
-                    dynamicTitle = dias <= 30 ? "Licença" : "Reserva";
-                }
-                
-                let commonPart = getCommonFieldsBBCode(formId, formData);
-
-                if(nick && nick.includes('/')) {
-                    const nickList = nick.split('/').map(n => n.trim());
-                    nickList.forEach(n => {
-                        let finalContent = `[font=Poppins][b]Nickname:[/b] ${n}[/font]\n`;
-
-                        if (formId === 'form-licenca') {
-                            const dias = formData.get('dias');
-                            const permissao = formData.get('permissao');
-                            const dataRetorno = new Date();
-                            dataRetorno.setDate(dataRetorno.getDate() + parseInt(dias));
-                            const dataRetornoStr = dataRetorno.toLocaleDateString('pt-BR');
-
-                            finalContent += `[font=Poppins][b]Duração:[/b] ${dias} dias\n`;
-                            finalContent += `[b]Solicitada em:[/b] ${todayStr}\n`;
-                            finalContent += `[b]Retorno em:[/b] ${dataRetornoStr}\n`;
-                            finalContent += `[b]Permissão:[/b] ${permissao}[/font]\n`;
-                        } else if (formId === 'form-retorno_licenca') {
-                            finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
-                        } else {
-                            finalContent += commonPart;
-                            finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
-                        }
-                        
-                        queue.push({ id: n, bbcode: generateSingleBBCode(dynamicTitle, finalContent) });
-                    });
-                } else if (nick) {
-                    let finalContent = `[font=Poppins][b]Nickname:[/b] ${nick}[/font]\n`;
-                    
-                    if (formId === 'form-licenca') {
-                        const dias = formData.get('dias');
-                        const permissao = formData.get('permissao');
-                        const dataRetorno = new Date();
-                        dataRetorno.setDate(dataRetorno.getDate() + parseInt(dias));
-                        const dataRetornoStr = dataRetorno.toLocaleDateString('pt-BR');
-
-                        finalContent += `[font=Poppins][b]Duração:[/b] ${dias} dias\n`;
-                        finalContent += `[b]Solicitada em:[/b] ${todayStr}\n`;
-                        finalContent += `[b]Retorno em:[/b] ${dataRetornoStr}\n`;
-                        finalContent += `[b]Permissão:[/b] ${permissao}[/font]\n`;
-                    } else if (formId === 'form-retorno_licenca') {
-                        finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
-                    } else {
-                        finalContent += commonPart;
-                        finalContent += `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`;
-                    }
-
-                    queue.push({
-                        id: 'Único',
-                        bbcode: generateSingleBBCode(dynamicTitle, finalContent)
-                    });
-                } else {
-                     queue.push({
-                        id: 'Único',
-                        bbcode: generateSingleBBCode(dynamicTitle, commonPart + `[font=Poppins][b]Data:[/b] ${todayStr}[/font]\n`)
-                    });
-                }
-            }
-        }
-
-        return queue;
-    }
 
     function getCommonFieldsBBCode(formId, formData) {
         let text = "";
