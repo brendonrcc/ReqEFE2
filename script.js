@@ -1385,7 +1385,7 @@ function generatePostQueue(formId, formData, formElement) {
 
     function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
-    allForms.forEach(form => {
+allForms.forEach(form => {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1413,10 +1413,10 @@ function generatePostQueue(formId, formData, formElement) {
             try {
                 const formData = new FormData(form);
 
-                // --- LOGS E PLANILHAS ---
+                // --- FASE 1: LOGS E PLANILHAS ---
                 btnText.textContent = "REGISTRANDO...";
                 
-                // Envio DA
+                // Envio DA (somente Entrada)
                 if (form.id === 'form-entrada' && document.getElementById('check-membro-da').checked) {
                     const aplicador = document.getElementById('da-aplicador-input').value;
                     const veredito = document.getElementById('da-veredito-select').value;
@@ -1429,13 +1429,13 @@ function generatePostQueue(formId, formData, formElement) {
                     }
                 }
                 
-                // Envio Planilha
+                // Envio Planilha Geral
                 await sendToSheet(form.id, formData, form);
 
-                // Abertura de Abas (Punição)
+                // Abertura de Abas (Punição Externa - Ex: Site)
                 await handlePunishmentTabs(form.id, form);
                 
-                // --- MENSAGENS PRIVADAS (MPs) ---
+                // --- FASE 2: MENSAGENS PRIVADAS (MPs) ---
                 const mpForms = ['form-entrada', 'form-saida', 'form-expulsao', 'form-promocao', 'form-advertencia', 'form-reintegracao'];
                 
                 if (mpForms.includes(form.id)) {
@@ -1467,21 +1467,46 @@ function generatePostQueue(formId, formData, formElement) {
                     }
                 }
 
-                // --- FASE 3: POSTAGEM NO FÓRUM ---
-                if (form.id !== 'form-advertencia') {
-                    // LÓGICA PARA TODOS OS OUTROS FORMS (TÓPICO PRINCIPAL)
-                    btnText.textContent = "GERANDO BBCODE...";
-                    const queue = generatePostQueue(form.id, formData, form);
-                    
+                // --- FASE 3: POSTAGEM NO FÓRUM (CORRIGIDO) ---
+                btnText.textContent = "GERANDO BBCODE...";
+                const queue = generatePostQueue(form.id, formData, form);
+                
+                if (form.id === 'form-advertencia') {
+                    const targetTopicId = CONFIG.topicAdvertencia || 38367;
+
+                    for (let i = 0; i < queue.length; i++) {
+                        const item = queue[i];
+                        btnText.textContent = `POSTANDO ${item.id.toUpperCase()}...`;
+                        
+                        try {
+                            await postToForumTopic(targetTopicId, item.bbcode);
+                            
+                            if (i < queue.length - 1) {
+                                for (let sec = 17; sec > 0; sec--) {
+                                    btnText.textContent = `FLOOD... ${sec}s`;
+                                    await delay(1000);
+                                }
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            showToast("Erro Postagem", `Falha ao postar advertência: ${err.message}`, "danger");
+                        }
+                    }
+                    showNotificationSuccess("Concluído!", "Advertência registrada e postada no tópico correto.", true);
+
+                } else {
+
                     let subgruposParaPostar = [];
                     const subCheck = form.querySelector('.subgroup-toggle-checkbox');
                     if (subCheck && subCheck.checked) {
                         const optionsContainer = form.querySelector('.subgroup-options-wrapper');
                         const selectedButtons = optionsContainer.querySelectorAll('.subgroup-selection-btn.selected');
                         selectedButtons.forEach(b => {
-                            const groupName = b.dataset.group;
-                            const configKey = "topic" + groupName;
-                            subgruposParaPostar.push({ id: CONFIG[configKey], name: groupName });
+                            const groupName = b.dataset.group; // ex: DA, DRI
+                            const configKey = "topic" + groupName; // topicDA, topicDRI
+                            if (CONFIG[configKey]) {
+                                subgruposParaPostar.push({ id: CONFIG[configKey], name: groupName });
+                            }
                         });
                     }
 
@@ -1490,6 +1515,7 @@ function generatePostQueue(formId, formData, formElement) {
                         btnText.textContent = `POSTANDO ${item.id.toUpperCase()}...`;
                         showNotificationProgress("Enviando...", `Postando <strong>${item.id}</strong>...`);
                         
+                        // 1. Postar no Tópico Principal
                         let posted = false;
                         let attempts = 0;
 
@@ -1508,17 +1534,18 @@ function generatePostQueue(formId, formData, formElement) {
                             }
                         }
 
-                        // Lógica de subgrupos (DA, DRI, DM) se houver
+                        // 2. Postar nos Subgrupos (se houver e se o principal foi postado)
                         if (posted && subgruposParaPostar.length > 0) {
                             for (const sub of subgruposParaPostar) {
                                 for (let sec = 17; sec > 0; sec--) {
-                                    btnText.textContent = `AGUARDE... ${sec}s`;
+                                    btnText.textContent = `AGUARDE (${sub.name})... ${sec}s`;
                                     await delay(1000);
                                 }
                                 await postToForumTopic(sub.id, item.bbcode);
                             }
                         }
 
+                        // Delay para o próximo item da fila principal
                         if (i < queue.length - 1) {
                             for (let sec = 10; sec > 0; sec--) {
                                 btnText.textContent = `PRÓXIMO ITEM... ${sec}s`;
@@ -1527,42 +1554,20 @@ function generatePostQueue(formId, formData, formElement) {
                         }
                     }
                     showNotificationSuccess("Concluído!", "Todos os requerimentos foram processados.", true);
-
-                } else {
-                    // LÓGICA EXCLUSIVA PARA FORM-ADVERTENCIA (TÓPICO 38367)
-                    btnText.textContent = "GERANDO BBCODE...";
-                    const queue = generatePostQueue(form.id, formData, form);
-
-                    for (let i = 0; i < queue.length; i++) {
-                        const item = queue[i];
-                        btnText.textContent = `POSTANDO ${item.id.toUpperCase()}...`;
-                        
-                        try {
-                            // Envia para o tópico fixo de advertências
-                            await postToForumTopic(38367, item.bbcode);
-                            
-                            if (i < queue.length - 1) {
-                                for (let sec = 17; sec > 0; sec--) {
-                                    btnText.textContent = `FLOOD... ${sec}s`;
-                                    await delay(1000);
-                                }
-                            }
-                        } catch (err) {
-                            showToast("Erro Postagem", `Falha ao postar advertência: ${err.message}`, "danger");
-                        }
-                    }
-                    showNotificationSuccess("Concluído!", "Advertência postada com sucesso.", true);
                 }
                 
+                // Configura botão de "Confira" para levar ao tópico correto
                 const btnConfira = document.getElementById('confira-post-btn');
-                if(btnConfira) btnConfira.onclick = () => { window.location.href = newestUrl(CONFIG.mainTopicId); };
+                if(btnConfira) {
+                    const finalTopicId = (form.id === 'form-advertencia') ? (CONFIG.topicAdvertencia || 38367) : CONFIG.mainTopicId;
+                    btnConfira.onclick = () => { window.location.href = newestUrl(finalTopicId); };
+                }
 
             } catch (error) {
                 if(error.message === "STOP_SUCCESS") return;
                 console.error("Erro Geral:", error);
                 showNotificationError("Falha", "Ocorreu um erro inesperado. Verifique o console.");
             } finally {
-                // Restaura botão
                 btn.disabled = false;
                 btnText.textContent = originalText;
                 if(btnIcon) btnIcon.classList.remove('hidden');
